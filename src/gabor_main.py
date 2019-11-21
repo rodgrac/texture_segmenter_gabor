@@ -7,6 +7,8 @@ import cv2
 import numpy as np
 from matplotlib import pyplot as plt
 
+color = np.float32([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 1, 0]])
+
 
 def createbankParams(f_max, f_n, theta_div):
     f = np.geomspace(f_max / 2 ** (f_n - 1), f_max, num=f_n, dtype=float)
@@ -54,6 +56,7 @@ def filterImage(img, filter_bank):
 
 
 def reduced_image(img_bank):
+    reduced_fsp_bank = []
     img_bank_mat = np.asarray(img_bank)
     t_shape = img_bank_mat.shape
     img_tensor = np.reshape(img_bank_mat, (t_shape[0], t_shape[1] * t_shape[2], t_shape[3]))
@@ -67,8 +70,21 @@ def reduced_image(img_bank):
 
         reduced_fsp = np.dot(reduced_ker.T, img_tensor[:, :, i])
 
-        img_acc[:, :, i] = np.max(reduced_fsp, axis=0).reshape(-1, t_shape[2])
-    return img_acc
+        reduced_fsp_bank.extend(reduced_fsp)
+
+        img_acc[:, :, i] = np.sqrt(np.sum(reduced_fsp ** 2, axis=0)).reshape(-1, t_shape[2])
+
+    return reduced_fsp_bank, img_acc
+
+
+def gaussian_smoothing(img_bank, shape):
+    gauss = cv2.getGaussianKernel(ksize=5, sigma=1.0)
+
+    for i in range(img_bank.shape[0]):
+        img = np.reshape(img_bank[i], (-1, shape[1]))
+        img_bank[i] = cv2.filter2D(img, -1, gauss).flatten()
+
+    return img_bank
 
 
 def plotGaborKernels(kernels, freq, theta):
@@ -110,18 +126,38 @@ def plotFilteredImages(f_img, freq, theta):
 
 
 if __name__ == "__main__":
-    img = cv2.imread('../res/tiger.jpg')
+    img = cv2.imread('../res/zebra.jpg')
+    img_s = img.shape
 
     freq, theta = createbankParams(1 / (2 + (2 * np.sqrt(np.log(2)) / np.pi)), 4, 8)
 
     filter_bank = createFilterBank(31, freq, theta, 0.5, 0.5)
     out, img_bank = filterImage(img, filter_bank)
 
-    output = reduced_image(img_bank)
+    red_bank, fs_img = reduced_image(img_bank)
+    output = np.asarray(red_bank)
+    output_n = ((output.T - np.min(output.T, axis=0)) / (np.max(output.T, axis=0) - np.min(output.T, axis=0))).T
+    output_e = np.tanh(output_n)
+    output_ne = ((output_e.T - np.min(output_e.T, axis=0))
+                 / (np.max(output_e.T, axis=0) - np.min(output_e.T, axis=0))).T
+
+    output_g = gaussian_smoothing(output_ne, img_s)
+
+    output_ng = ((output_g.T - np.min(output_g.T, axis=0))
+                 / (np.max(output_g.T, axis=0) - np.min(output_g.T, axis=0)))
+
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+    K = 2
+    ret, label, center = cv2.kmeans(np.float32(output_ng), K, None, criteria, 10, cv2.KMEANS_RANDOM_CENTERS)
+
+    # color = np.random.randn(K, 3)
+    res = color[label.flatten()]
+    res2 = res.reshape(img_s)
 
     cv2.imshow('Input', img)
     cv2.imshow('Output1', out)
-    cv2.imshow('Output2', output)
+    cv2.imshow('Output2', fs_img)
+    cv2.imshow('Output3', res2)
 
     key = cv2.waitKey(0)
     if key & 0xFF == ord('k'):
