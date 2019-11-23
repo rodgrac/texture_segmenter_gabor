@@ -3,8 +3,10 @@
 # Author: Rodney Gracian Dsouza
 ######################################################
 
+import sys
 import cv2
 import numpy as np
+from datetime import datetime
 
 from src import feature_extractor as fext
 from src import feature_selector as fsel
@@ -21,7 +23,8 @@ sigma_x = sigma_y = 0.5
 K = 2
 
 if __name__ == "__main__":
-    input_img = cv2.imread('../res/zebra.jpg')
+    input_img = cv2.imread(sys.argv[1])
+    # input_img = (input_img - np.min(input_img))/(np.max(input_img))
     input_dim = input_img.shape
 
     print("Creating Gabor Filter Bank")
@@ -55,17 +58,24 @@ if __name__ == "__main__":
 
     output = seg_color.reshape(input_dim)
 
+    fsp_img_i = np.clip(fsp_img * 255.0, 0, 255).astype('uint8')
+    output_i = np.clip(output * 255.0, 0, 255).astype('uint8')
+
     cv2.imshow('Input', input_img)
     cv2.imshow('Texture Enhanced', img_accum)
-    cv2.imshow('Selected Features', fsp_img)
-    cv2.imshow('Segmented Features', output)
+    cv2.imshow('Selected Features', fsp_img_i)
+    cv2.imshow('Segmented Features', output_i)
 
     print("Blue: Foreground Features; Green: Background")
 
-    key = cv2.waitKey(0)
+    key = cv2.waitKey(0) & 0xFF
     if key & 0xFF == ord('k'):
         utils.plotGaborKernels(filter_bank, freq, theta)
     if key & 0xFF == ord('f'):
         utils.plotFilteredImages(img_bank, freq, theta)
+    if key & 0xFF == ord('s'):
+        now = datetime.now().time()
+        stitched = utils.stitch_output(input_img, img_accum, fsp_img_i, output_i)
+        cv2.imwrite('../out/output_' + str(now) + '.png', stitched)
 
     cv2.destroyAllWindows()
