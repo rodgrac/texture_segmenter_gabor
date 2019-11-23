@@ -44,8 +44,29 @@ This project is built on Python 3. It requires OpenCV support and was tested wit
 ```python3 src/main.py res/tiger.jpg```
 
 ## Demos
+Below are the test results on a couple of random images. In the segmented image, blue represents the features and green represents background
+
+<p align="center">
+  <img src="docs/images/output_18:13:13.894051.png">
+</p>
+
+<p align="center">
+  <img src="docs/images/output_18:08:50.838480.png">
+</p>
+
+<p align="center">
+  <img src="docs/images/output_18:14:15.698505.png">
+</p>
+
+<p align="center">
+  <img src="docs/images/output_18:15:33.614701.png">
+</p>
 
 ## Reference
+- Weitao Li, KeZhi Mao, Hong Zhang, Tianyou Chai, "Designing Compact Gabor Filter Banks for Efficient
+Texture Feature Extraction"
+- Anil K. Jain, Farshid Farrokhnia, "Unsupervised Texture Segmentation Using Gabor
+Filters"
 
 ## Future Scope of Work
 These segmented gabor features can be fed to classifiers for object categorization/recognition which is future scope of work
