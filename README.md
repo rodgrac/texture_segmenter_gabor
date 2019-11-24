@@ -62,6 +62,9 @@ Below are the test results on a couple of random images. In the segmented image,
   <img src="docs/images/output_18:15:33.614701.png">
 </p>
 
+## Author
+Rodney Gracian Dsouza
+
 ## Reference
 - Weitao Li, KeZhi Mao, Hong Zhang, Tianyou Chai, "Designing Compact Gabor Filter Banks for Efficient
 Texture Feature Extraction"
